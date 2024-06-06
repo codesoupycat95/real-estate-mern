@@ -28,7 +28,7 @@ export const signin = async (req, res, next) => {
         const { password: pass, ...rest } = validUser._doc;   // Filter to separate password and rest of the information (in short we are trying to not select password)
 
         // Creating the cookie. If you want to put an expiry date and time, add the key `expires:<time>` after httpOnly 
-        res.cookie("access_token", token, { httpOnly: true }).status(200).json(rest);
+        res.cookie("access_token", token, { httpOnly: true }).status(200).json({ ...rest, token });
     }
     catch (error) {
         next(error);
@@ -53,7 +53,12 @@ export const google = async (req, res, next) => {
             // in `toString()` 36 number refers to 36 characters 26 alphabets and 10 numbers and -8 stands for last 8 digits.
             const generatedPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
             const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
-            const newUser = new User({ username: req.body.name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-4), email: req.body.email, password: hashedPassword, avatar: req.body.photo });
+            const newUser = new User({
+                username: req.body.name.split(" ").join("").toLowerCase() + Math.random().toString(36).slice(-4),
+                email: req.body.email,
+                password: hashedPassword,
+                avatar: req.body.photo,
+            });
             await newUser.save();
             const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET_KEY);
             const { password: pass, ...rest } = newUser._doc;
